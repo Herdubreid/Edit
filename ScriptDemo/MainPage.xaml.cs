@@ -28,6 +28,7 @@ namespace ScriptDemo
 					=> Clipboard.SetTextAsync(_lines[_lineNo++]));
 			}
 		}
+		private TaskPoolGlobalHook _hook;
 		private async void StartClicked(object sender, EventArgs e)
 		{
 			if (string.IsNullOrEmpty(editor.Text)) return;
@@ -40,45 +41,34 @@ namespace ScriptDemo
 				if (_lines.Length > 0)
 				{
 					await Clipboard.SetTextAsync(_lines[0]);
+
+					_hook = new TaskPoolGlobalHook();
+					_hook.KeyReleased += KeyReleased;
+					_ = _hook.RunAsync();
 				}
 				else
 				{
 					_running = false;
 				}
 			}
+			else
+			{
+				_hook.Dispose();
+			}
 			OnPropertyChanged(nameof(StartLabel));
 		}
 
-		void OnEditorTextChanged(object sender, TextChangedEventArgs e)
-		{
-			string oldText = e.OldTextValue;
-			string newText = e.NewTextValue;
-			string myText = editor.Text;
-		}
-		void OnEditorCompleted(object sender, EventArgs e)
-		{
-			string text = ((Editor)sender).Text;
-		}
-		private readonly TaskPoolGlobalHook _hook;
 		public MainPage()
 		{
 			InitializeComponent();
 			BindingContext = this;
-
-			_hook = new TaskPoolGlobalHook();
-			_hook.KeyReleased += KeyReleased;
-
-			Task.Run(async () =>
-			{
-				await _hook.RunAsync();
-			});
 		}
 
 		protected override void OnDisappearing()
 		{
 			base.OnDisappearing();
-			_hook.Dispose();
+			if (_hook != null && !_hook.IsDisposed)
+				_hook.Dispose();
 		}
-
 	}
 }
