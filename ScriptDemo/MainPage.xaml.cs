@@ -1,7 +1,6 @@
-﻿using Microsoft.Maui.Controls.Compatibility;
-using System.Runtime.InteropServices;
-using SharpHook;
+﻿using SharpHook;
 using SharpHook.Native;
+using System.Diagnostics;
 
 namespace ScriptDemo
 {
@@ -16,19 +15,17 @@ namespace ScriptDemo
 			if (!_running) return;
 			if (_lineNo >= _lines.Length)
 			{
-				_running = false;
 				OnPropertyChanged(nameof(StartLabel));
+				_running = false;
 				return;
 			}
 
 			if (e.Data.KeyCode == KeyCode.VcV &&
 				(e.RawEvent.Mask & ModifierMask.RightCtrl) != ModifierMask.None)
 			{
-				await Application.Current.Dispatcher.DispatchAsync(()
-					=> Clipboard.SetTextAsync(_lines[_lineNo++]));
+				await Clipboard.SetTextAsync(_lines[_lineNo++]);
 			}
 		}
-		private TaskPoolGlobalHook _hook;
 		private async void StartClicked(object sender, EventArgs e)
 		{
 			if (string.IsNullOrEmpty(editor.Text)) return;
@@ -41,34 +38,31 @@ namespace ScriptDemo
 				if (_lines.Length > 0)
 				{
 					await Clipboard.SetTextAsync(_lines[0]);
-
-					_hook = new TaskPoolGlobalHook();
-					_hook.KeyReleased += KeyReleased;
-					_ = _hook.RunAsync();
 				}
 				else
 				{
 					_running = false;
 				}
 			}
-			else
-			{
-				_hook.Dispose();
-			}
 			OnPropertyChanged(nameof(StartLabel));
 		}
 
+		private TaskPoolGlobalHook _hook;
 		public MainPage()
 		{
 			InitializeComponent();
 			BindingContext = this;
+
+			_hook = new TaskPoolGlobalHook();
+			_hook.KeyReleased += KeyReleased;
+
+			_ = Task.Run(() => _hook.Run());
 		}
 
 		protected override void OnDisappearing()
 		{
 			base.OnDisappearing();
-			if (_hook != null && !_hook.IsDisposed)
-				_hook.Dispose();
+			_hook.Dispose();
 		}
 	}
 }

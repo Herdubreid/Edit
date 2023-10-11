@@ -6,12 +6,11 @@
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="{Binding StartLabel}" Clicked="StartClicked"/>
     </ContentPage.ToolbarItems>
-
     <ScrollView VerticalScrollBarVisibility="Always">
         <Editor x:Name="editor"
-        Keyboard="Text"
-        Placeholder="Enter script..."
-        IsSpellCheckEnabled="False" />
+                Keyboard="Plain"
+                HorizontalOptions="Fill"
+                Placeholder="Enter Text to Paste..."
+                IsSpellCheckEnabled="False" />
     </ScrollView>
-
 </ContentPage>
